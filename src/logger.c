@@ -1,7 +1,9 @@
 #include <zephyr/kernel.h>
 #include <zephyr/logging/log.h>
 
-#include "sensor.h"
+#include "logger.h"
+#include "processing.h"
+
 /***
  * logger.c - Consumes sensor data and logs it
  * 
@@ -15,15 +17,17 @@ void logger_thread(void *arg1, void *arg2, void *arg3)
     ARG_UNUSED(arg2);
     ARG_UNUSED(arg3);
 
-    struct sensor_data data;
+    struct processed_data data;
 
     while (1) {
 
-        k_msgq_get(&sensor_msgq, &data, K_FOREVER);
+        k_msgq_get(&processed_msgq, &data, K_FOREVER);
 
-        LOG_INF("Temp: %d C | Humidity: %d%% | Air Quality: %d",
+        LOG_INF("Temp: %d C%s | Humidity: %d%% | Air Quality: %d",
                 data.temperature,
+                data.temp_alert ? " [HIGH]" : "",
                 data.humidity,
-                data.air_quality);
+                data.air_quality
+        );
     }
 }

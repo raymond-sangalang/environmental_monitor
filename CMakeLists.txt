@@ -11,5 +11,6 @@ target_include_directories(app PRIVATE
 target_sources(app PRIVATE
     src/main.c
     src/sensor.c
+    src/processing.c
     src/logger.c
 )

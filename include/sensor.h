@@ -14,12 +14,16 @@ struct sensor_data {
     int air_quality;
 };
 
+
+
 // Message queue declaration 
 extern struct k_msgq sensor_msgq;
 
+
+
 // Thread entry functions 
 void sensor_thread(void *, void *, void *);
-void logger_thread(void *, void *, void *);
+// void logger_thread(void *, void *, void *);
 
 
 #endif
