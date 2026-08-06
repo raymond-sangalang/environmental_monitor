@@ -12,6 +12,8 @@ struct processed_data {
     int humidity;
     int air_quality;
 
+    int average_temperature;
+
     bool temp_alert;
 };
 

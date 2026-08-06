@@ -23,9 +23,10 @@ void logger_thread(void *arg1, void *arg2, void *arg3)
 
         k_msgq_get(&processed_msgq, &data, K_FOREVER);
 
-        LOG_INF("Temp: %d C%s | Humidity: %d%% | Air Quality: %d",
+        LOG_INF("Temp: %d C%s | Avg: %d C | Humidity: %d%% | Air Quality: %d",
                 data.temperature,
                 data.temp_alert ? " [HIGH]" : "",
+                data.average_temperature,
                 data.humidity,
                 data.air_quality
         );

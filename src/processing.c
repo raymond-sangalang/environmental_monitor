@@ -8,7 +8,7 @@
 // Circular buffer 
 static int temp_history[HISTORY_SIZE] = {0};
 
-// Points to where the next reading will be stored 
+// Points to where the next reading will be stored - next position to write
 static int history_index = 0;
 
 // Number of valid samples currently stored 
@@ -50,4 +50,25 @@ void process_sensor_data(const struct sensor_data *input,
     output->air_quality = input->air_quality;
 
     output->temp_alert = (input->temperature > 27);
+
+
+    // Store each new temperature
+    temp_history[history_index] = input->temperature;
+    
+    // Advance the history index
+    history_index = (history_index + 1) % HISTORY_SIZE;
+
+    // Increase number of valid samples
+    if (sample_count < HISTORY_SIZE) {
+        sample_count++;
+    }
+
+    // Compute the average
+    int sum = 0;
+
+    for (int i = 0; i < sample_count; i++) {
+        sum += temp_history[i];
+    }
+
+    output->average_temperature = sum / sample_count;
 }
