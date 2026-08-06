@@ -14,6 +14,9 @@ struct processed_data {
 
     int average_temperature;
 
+    int min_temperature;
+    int max_temperature;
+
     bool temp_alert;
 };
 

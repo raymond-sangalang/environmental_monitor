@@ -1,12 +1,13 @@
 #include <zephyr/kernel.h>
 
 #include "processing.h"
+#include "config.h"
 
 
-#define HISTORY_SIZE 5
+// #define HISTORY_SIZE 5
 
 // Circular buffer 
-static int temp_history[HISTORY_SIZE] = {0};
+static int temp_history[HISTORY_SIZE];  // = {0};
 
 // Points to where the next reading will be stored - next position to write
 static int history_index = 0;
@@ -49,7 +50,7 @@ void process_sensor_data(const struct sensor_data *input,
     output->humidity = input->humidity;
     output->air_quality = input->air_quality;
 
-    output->temp_alert = (input->temperature > 27);
+    output->temp_alert = (input->temperature > TEMP_ALERT_THRESHOLD);
 
 
     // Store each new temperature
@@ -66,9 +67,23 @@ void process_sensor_data(const struct sensor_data *input,
     // Compute the average
     int sum = 0;
 
+    // Initializing the min and max using first valid sample
+    int min = temp_history[0];
+    int max = temp_history[0];
+
     for (int i = 0; i < sample_count; i++) {
-        sum += temp_history[i];
+        int temp = temp_history[i];
+
+        sum += temp;
+
+        if (temp < min)
+            min = temp;
+
+        if (temp > max)
+            max = temp;
     }
 
     output->average_temperature = sum / sample_count;
+    output->min_temperature = min;
+    output->max_temperature = max;
 }
