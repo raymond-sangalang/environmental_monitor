@@ -4,8 +4,6 @@
 #include "config.h"
 
 
-// #define HISTORY_SIZE 5
-
 // Circular buffer 
 static int temp_history[HISTORY_SIZE];  // = {0};
 
@@ -14,6 +12,9 @@ static int history_index = 0;
 
 // Number of valid samples currently stored 
 static int sample_count = 0;
+
+// Tracks the total sum of all the readings in the history buffer
+static int running_sum = 0;
 
 
 /* Queue that carries processed data */
@@ -52,38 +53,45 @@ void process_sensor_data(const struct sensor_data *input,
 
     output->temp_alert = (input->temperature > TEMP_ALERT_THRESHOLD);
 
+    // Holds the oldest temperature to be removed
+    int old_temperature = temp_history[history_index];
 
-    // Store each new temperature
-    temp_history[history_index] = input->temperature;
+    // Update the running sum of all the values
+    if (sample_count == HISTORY_SIZE) {
+        running_sum -= old_temperature;
+    }
+    // Store new temperature
+    temp_history[history_index] = input->temperature; 
+
+    // Add the new temperature to the running sum   
+    running_sum += input->temperature;
     
-    // Advance the history index
-    history_index = (history_index + 1) % HISTORY_SIZE;
 
-    // Increase number of valid samples
+
+    // Increase number of valid samples until history buffer reaches the HISTORY_SIZE
     if (sample_count < HISTORY_SIZE) {
         sample_count++;
     }
 
-    // Compute the average
-    int sum = 0;
+    // Advance the history index to next position in the circular buffer
+    history_index = (history_index + 1) % HISTORY_SIZE;
 
+
+    // Calculating the average using running sum
+    output->average_temperature = running_sum / sample_count;
+
+
+    // Calculating minimum and maximums
     // Initializing the min and max using first valid sample
-    int min = temp_history[0];
-    int max = temp_history[0];
+    output->min_temperature = temp_history[0];
+    output->max_temperature = temp_history[0];
 
-    for (int i = 0; i < sample_count; i++) {
-        int temp = temp_history[i];
+    for (int i = 1; i < sample_count; i++) {
 
-        sum += temp;
+        if (temp_history[i] < output->min_temperature)
+            output->min_temperature = temp_history[i];
 
-        if (temp < min)
-            min = temp;
-
-        if (temp > max)
-            max = temp;
+        if (temp_history[i] > output->max_temperature)
+            output->max_temperature = temp_history[i];
     }
-
-    output->average_temperature = sum / sample_count;
-    output->min_temperature = min;
-    output->max_temperature = max;
 }
