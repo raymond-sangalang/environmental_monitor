@@ -1,7 +1,22 @@
 #include <zephyr/kernel.h>
+#include <zephyr/logging/log.h>
 
 #include "processing.h"
 #include "config.h"
+
+LOG_MODULE_DECLARE(environment_monitor);
+
+// Min and max temperatures
+#define MIN_TEMPERATURE -40
+#define MAX_TEMPERATURE 85
+
+// Min and max humidity
+#define MIN_HUMIDITY 0
+#define MAX_HUMIDITY 100
+
+// Min and max air quality
+#define MIN_AIR_QUALITY 0
+#define MAX_AIR_QUALITY 500
 
 
 // Circular buffer 
@@ -23,6 +38,7 @@ K_MSGQ_DEFINE(processed_msgq,
               10,
               4);
 
+
 void processing_thread(void *arg1, void *arg2, void *arg3)
 {
     ARG_UNUSED(arg1);
@@ -37,12 +53,18 @@ void processing_thread(void *arg1, void *arg2, void *arg3)
         /* Wait for a new sensor reading */
         k_msgq_get(&sensor_msgq, &sensor, K_FOREVER);
 
+        if (!validate_sensor_data(&sensor)) {
+            LOG_WRN("Invalid sensor data received");
+            continue;
+        }
+
         process_sensor_data(&sensor, &processed);
 
         /* Send to the logger */
         k_msgq_put(&processed_msgq, &processed, K_FOREVER);
     }
 }
+
 
 void process_sensor_data(const struct sensor_data *input,
                          struct processed_data *output)
@@ -94,4 +116,41 @@ void process_sensor_data(const struct sensor_data *input,
         if (temp_history[i] > output->max_temperature)
             output->max_temperature = temp_history[i];
     }
+}
+
+
+bool validate_sensor_data(const struct sensor_data *input)
+{
+    if (input == NULL) {
+        return false;
+    }
+
+    if (input->temperature < MIN_TEMPERATURE ||
+        input->temperature > MAX_TEMPERATURE) {
+        return false;
+    }
+
+    if (input->humidity < MIN_HUMIDITY ||
+        input->humidity > MAX_HUMIDITY) {
+        return false;
+    }
+
+    if (input->air_quality < MIN_AIR_QUALITY ||
+        input->air_quality > MAX_AIR_QUALITY) {
+        return false;
+    }
+
+    return true;
+}
+
+
+void processing_reset_history(void)
+{
+    for (int i = 0; i < HISTORY_SIZE; i++) {
+        temp_history[i] = 0;
+    }
+
+    history_index = 0;
+    sample_count = 0;
+    running_sum = 0;
 }

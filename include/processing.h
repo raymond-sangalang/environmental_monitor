@@ -32,4 +32,12 @@ void processing_thread(void *, void *, void *);
 void process_sensor_data(const struct sensor_data *input,
                          struct processed_data *output);
 
+/* Sensor processing */
+bool validate_sensor_data(const struct sensor_data *input);
+
+
+/* Reset function for testing */
+void processing_reset_history(void);
+
+
 #endif
